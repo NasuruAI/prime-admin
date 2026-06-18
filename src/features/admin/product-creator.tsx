@@ -17,9 +17,12 @@ const selectCls =
   "h-10 w-full border border-ink/15 bg-white px-3 text-sm text-ink focus:border-primary focus:outline-none";
 const labelCls = "mb-1 block text-xs font-medium text-ink/60";
 
+type SupplierRef = { id: number; name: string };
+
 export function ProductCreator() {
   const [categories, setCategories] = useState<Ref[]>([]);
   const [brands, setBrands] = useState<Ref[]>([]);
+  const [suppliers, setSuppliers] = useState<SupplierRef[]>([]);
 
   // Product fields
   const [title, setTitle] = useState("");
@@ -28,6 +31,7 @@ export function ProductCreator() {
   const [newCategory, setNewCategory] = useState("");
   const [brandId, setBrandId] = useState("");
   const [fulfillment, setFulfillment] = useState("internal");
+  const [supplierId, setSupplierId] = useState("");
 
   // Featured image (uploaded to Cloudinary; we submit its public_id).
   const [featuredUrl, setFeaturedUrl] = useState("");
@@ -56,6 +60,7 @@ export function ProductCreator() {
   useEffect(() => {
     adminList<Ref>("/catalog/categories/").then(setCategories).catch(() => {});
     adminList<Ref>("/catalog/brands/").then(setBrands).catch(() => {});
+    adminList<SupplierRef>("/suppliers/suppliers/").then(setSuppliers).catch(() => {});
   }, []);
 
   function setOption(i: number, patch: Partial<OptionDraft>) {
@@ -98,6 +103,7 @@ export function ProductCreator() {
         new_category: newCategory.trim(),
         brand: brandId ? Number(brandId) : null,
         fulfillment_type: fulfillment,
+        supplier: fulfillment === "dropship" && supplierId ? supplierId : null,
         is_active: true,
         image_public_id: featuredPublicId,
         kind,
@@ -225,9 +231,31 @@ export function ProductCreator() {
                 onChange={(e) => setFulfillment(e.target.value)}
                 className={selectCls}
               >
-                <option value="internal">Internal stock</option>
-                <option value="dropship">Dropship supplier</option>
+                <option value="internal">Internal stock (you ship)</option>
+                <option value="dropship">Dropship (supplier ships)</option>
               </select>
+              {fulfillment === "dropship" && (
+                <div className="mt-2">
+                  <label className={labelCls}>Supplier</label>
+                  <select
+                    value={supplierId}
+                    onChange={(e) => setSupplierId(e.target.value)}
+                    className={selectCls}
+                  >
+                    <option value="">— choose a supplier —</option>
+                    {suppliers.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </select>
+                  {suppliers.length === 0 && (
+                    <p className="mt-1 text-xs text-ink/45">
+                      No suppliers yet — add one on the Suppliers page first.
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
             <div>
               <label className={labelCls}>Featured image</label>

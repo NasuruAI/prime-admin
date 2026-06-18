@@ -371,7 +371,15 @@ export function VariantManager({
                       />
                     </td>
                     <td className="py-2 pr-4 font-medium text-ink">{v.sku}</td>
-                    <td className="py-2 pr-4 text-ink/70">{v.price}</td>
+                    <td className="py-2 pr-4 text-ink/70">
+                      {v.price}
+                      {Number(v.cost_price) > 0 && (
+                        <span className="block text-[11px] text-ink/40">
+                          cost {v.cost_price} · profit{" "}
+                          {(Number(v.price) - Number(v.cost_price)).toFixed(2)}
+                        </span>
+                      )}
+                    </td>
                     <td className="py-2 pr-4 text-ink/70">
                       {stock[v.id] ?? 0}
                     </td>

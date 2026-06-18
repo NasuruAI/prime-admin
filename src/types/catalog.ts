@@ -106,6 +106,7 @@ export type AdminVariant = {
   id: string;
   sku: string;
   price: string;
+  cost_price: string;
   is_active: boolean;
   is_default: boolean;
   fulfillment_type: "internal" | "dropship";
