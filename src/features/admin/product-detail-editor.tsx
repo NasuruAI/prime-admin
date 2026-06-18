@@ -10,6 +10,7 @@ import { Banner } from "@/components/ui/banner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { adminCall } from "@/lib/admin-client";
+import { uploadToCloudinary } from "@/lib/cloudinary";
 import type {
   AdminOptionType,
   AdminProduct,
@@ -19,7 +20,7 @@ import type {
   ProductImage,
 } from "@/types/catalog";
 
-import { CloudinaryUpload } from "./cloudinary-upload";
+import { OptionsManager } from "./options-manager";
 import { VariantManager } from "./variant-manager";
 
 const selectCls =
@@ -48,6 +49,9 @@ export function ProductDetailEditor({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
+  const [uploading, setUploading] = useState<{ done: number; total: number } | null>(
+    null,
+  );
 
   const [form, setForm] = useState({
     title: product.title,
@@ -69,18 +73,30 @@ export function ProductDetailEditor({
     if (i.variant) variantImages[i.variant] = { id: i.id, thumb: i.urls.thumb };
   }
 
-  async function attachProductImage(publicId: string) {
+  // Upload one or many images at once; the first one becomes featured if the
+  // product has none yet. Uploads run sequentially with simple progress.
+  async function onPickImages(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = ""; // allow re-picking the same files
+    if (files.length === 0) return;
+    setError(null);
+    setUploading({ done: 0, total: files.length });
+    let makeFirstPrimary = productImages.length === 0;
     try {
-      await adminCall(`/catalog/products/${product.id}/images/`, {
-        method: "POST",
-        body: JSON.stringify({
-          public_id: publicId,
-          is_primary: productImages.length === 0, // first image becomes featured
-        }),
-      });
+      for (let i = 0; i < files.length; i++) {
+        const { publicId } = await uploadToCloudinary(files[i]);
+        await adminCall(`/catalog/products/${product.id}/images/`, {
+          method: "POST",
+          body: JSON.stringify({ public_id: publicId, is_primary: makeFirstPrimary }),
+        });
+        makeFirstPrimary = false;
+        setUploading({ done: i + 1, total: files.length });
+      }
       router.refresh();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not add image.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Some images failed to upload.");
+    } finally {
+      setUploading(null);
     }
   }
 
@@ -286,6 +302,9 @@ export function ProductDetailEditor({
         )}
       </section>
 
+      {/* Options (Size, Color, …) — add these to enable multiple variants */}
+      <OptionsManager productId={product.id} optionTypes={optionTypes} />
+
       {/* Variants — create / edit / delete + one image each */}
       <VariantManager
         productId={product.id}
@@ -343,12 +362,30 @@ export function ProductDetailEditor({
             </div>
           ))}
         </div>
-        <div className="max-w-[10rem] border-t border-ink/10 pt-4">
-          <p className="mb-2 text-xs font-medium text-ink/60">Add image</p>
-          <CloudinaryUpload
-            value=""
-            onChange={(_url, publicId) => publicId && attachProductImage(publicId)}
-          />
+        <div className="border-t border-ink/10 pt-4">
+          <label
+            className={`inline-flex cursor-pointer items-center gap-2 border border-dashed px-4 py-2.5 text-sm font-medium transition ${
+              uploading
+                ? "border-ink/15 text-ink/40"
+                : "border-primary/40 text-primary hover:border-primary hover:bg-primary/5"
+            }`}
+          >
+            {uploading
+              ? `Uploading ${uploading.done}/${uploading.total}…`
+              : "＋ Add images (select multiple)"}
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              disabled={!!uploading}
+              onChange={onPickImages}
+              className="hidden"
+            />
+          </label>
+          <p className="mt-2 text-xs text-ink/45">
+            You can select several files at once — they upload to Cloudinary in
+            order.
+          </p>
         </div>
       </section>
     </div>

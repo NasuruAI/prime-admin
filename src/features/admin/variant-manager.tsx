@@ -190,6 +190,14 @@ export function VariantManager({
         </div>
       )}
 
+      {!canAdd && (
+        <p className="mb-4 text-sm text-ink/55">
+          This is a simple product (one variant). Add an option like{" "}
+          <em>Size</em> or <em>Color</em> in the <strong>Options</strong> section
+          above to create more variants.
+        </p>
+      )}
+
       {/* Create form */}
       {adding && (
         <div className="mb-5 border border-ink/10 bg-surface p-4">
