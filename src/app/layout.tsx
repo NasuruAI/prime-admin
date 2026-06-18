@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 
+import { getStoreName } from "@/lib/config";
+
 import "./globals.css";
 
 const inter = Inter({
@@ -14,13 +16,16 @@ const playfair = Playfair_Display({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: {
-    default: "IdealCommerce Admin",
-    template: "%s · IdealCommerce Admin",
-  },
-  description: "Back-office for IdealCommerce.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const storeName = await getStoreName();
+  return {
+    title: {
+      default: `${storeName} Admin`,
+      template: `%s · ${storeName} Admin`,
+    },
+    description: `Back-office for ${storeName}.`,
+  };
+}
 
 export default function RootLayout({
   children,
