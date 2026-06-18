@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-surface text-ink antialiased;
+  }
+  ::selection {
+    @apply bg-accent/20;
+  }
+}
+
+@layer components {
+  /* A standard content panel. */
+  .admin-card {
+    @apply border border-ink/10 bg-white shadow-card;
+  }
+  /* Status / label pill. */
+  .badge {
+    @apply inline-flex items-center bg-ink/5 px-2 py-0.5 text-xs font-medium text-ink/70;
+  }
+}
