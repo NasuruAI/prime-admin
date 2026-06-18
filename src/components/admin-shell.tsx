@@ -24,24 +24,27 @@ const NAV: NavItem[] = [
 
 export function AdminShell({
   email,
+  storeName,
   children,
 }: {
   email: string;
+  storeName: string;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const active = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
+  const initials = brandInitials(storeName);
 
   const sidebar = (
     <div className="flex h-full flex-col bg-ink text-blush">
       <div className="flex h-16 items-center gap-2 border-b border-white/10 px-5">
         <span className="flex h-8 w-8 items-center justify-center bg-accent font-display text-sm font-bold text-white">
-          IC
+          {initials}
         </span>
         <div className="leading-tight">
-          <div className="font-display text-base font-bold">IdealCommerce</div>
+          <div className="font-display text-base font-bold">{storeName}</div>
           <div className="text-[10px] uppercase tracking-[0.2em] text-blush/50">
             Admin
           </div>
@@ -123,7 +126,7 @@ export function AdminShell({
             {ICONS.menu}
           </button>
           <div className="font-display text-lg font-bold text-ink lg:hidden">
-            IdealCommerce
+            {storeName}
           </div>
           <div className="ml-auto flex items-center gap-4">
             <span className="hidden text-sm text-ink/55 sm:block">{email}</span>
@@ -219,6 +222,14 @@ const ICONS = {
     22,
   ),
 };
+
+/** Up to two letters for the brand badge, derived from the store name. */
+function brandInitials(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "ST";
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[1][0]).toUpperCase();
+}
 
 function svg(children: React.ReactNode, size = 18) {
   return (
