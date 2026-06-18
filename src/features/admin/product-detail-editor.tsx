@@ -60,6 +60,8 @@ export function ProductDetailEditor({
     brand: product.brand ? String(product.brand) : "",
     fulfillment_type: product.fulfillment_type,
     is_active: product.is_active,
+    discount_on: Number(product.discount_percent) > 0,
+    discount_percent: product.discount_percent ?? "0",
   });
 
   const categoryName =
@@ -123,6 +125,7 @@ export function ProductDetailEditor({
           brand: form.brand ? Number(form.brand) : null,
           fulfillment_type: form.fulfillment_type,
           is_active: form.is_active,
+          discount_percent: form.discount_on ? form.discount_percent || "0" : "0",
         }),
       });
       setEditing(false);
@@ -203,6 +206,16 @@ export function ProductDetailEditor({
             <dd className="capitalize text-ink">{product.fulfillment_type}</dd>
             <dt className="text-ink/50">Price from</dt>
             <dd className="text-ink">{product.price_from ?? "—"}</dd>
+            <dt className="text-ink/50">Discount</dt>
+            <dd className="text-ink">
+              {Number(product.discount_percent) > 0 ? (
+                <span className="font-medium text-accent">
+                  {Number(product.discount_percent)}% off
+                </span>
+              ) : (
+                <span className="text-ink/40">None</span>
+              )}
+            </dd>
             <dt className="text-ink/50">Description</dt>
             <dd className="text-ink/80">
               {product.description || (
@@ -297,6 +310,36 @@ export function ProductDetailEditor({
                 />
                 Active (visible in store)
               </label>
+            </div>
+
+            {/* Discount */}
+            <div className="border-t border-ink/10 pt-4">
+              <label className="flex items-center gap-2 text-sm font-medium text-ink">
+                <input
+                  type="checkbox"
+                  checked={form.discount_on}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, discount_on: e.target.checked }))
+                  }
+                />
+                On discount
+              </label>
+              {form.discount_on && (
+                <div className="mt-3 flex items-center gap-2">
+                  <Input
+                    value={form.discount_percent}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, discount_percent: e.target.value }))
+                    }
+                    className="w-24"
+                    inputMode="decimal"
+                    placeholder="10"
+                  />
+                  <span className="text-sm text-ink/70">
+                    % off — original price shown struck through in the store.
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         )}
