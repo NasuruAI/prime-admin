@@ -32,6 +32,8 @@ export function ProductCreator() {
   const [brandId, setBrandId] = useState("");
   const [fulfillment, setFulfillment] = useState("internal");
   const [supplierId, setSupplierId] = useState("");
+  const [discountOn, setDiscountOn] = useState(false);
+  const [discountPercent, setDiscountPercent] = useState("");
 
   // Featured image (uploaded to Cloudinary; we submit its public_id).
   const [featuredUrl, setFeaturedUrl] = useState("");
@@ -105,6 +107,7 @@ export function ProductCreator() {
         fulfillment_type: fulfillment,
         supplier: fulfillment === "dropship" && supplierId ? supplierId : null,
         is_active: true,
+        discount_percent: discountOn ? discountPercent || "0" : "0",
         image_public_id: featuredPublicId,
         kind,
       };
@@ -269,6 +272,33 @@ export function ProductCreator() {
                 />
               </div>
             </div>
+          </div>
+
+          {/* Discount */}
+          <div className="border-t border-ink/10 pt-4">
+            <label className="flex items-center gap-2 text-sm font-medium text-ink">
+              <input
+                type="checkbox"
+                checked={discountOn}
+                onChange={(e) => setDiscountOn(e.target.checked)}
+              />
+              Put this product on discount
+            </label>
+            {discountOn && (
+              <div className="mt-3 flex items-center gap-2">
+                <Input
+                  value={discountPercent}
+                  onChange={(e) => setDiscountPercent(e.target.value)}
+                  className="w-24"
+                  inputMode="decimal"
+                  placeholder="10"
+                />
+                <span className="text-sm text-ink/70">
+                  % off — shoppers see the original price struck through and pay
+                  the discounted price.
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </section>
