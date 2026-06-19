@@ -1,11 +1,15 @@
 import { CouponsAdmin } from "@/features/admin/coupons-admin";
+import { PageHeader } from "@/components/page-header";
 
 export const metadata = { title: "Coupons" };
 
 export default function Page() {
   return (
     <div>
-      <h1 className="mb-6 font-display text-2xl font-bold text-ink">Coupons</h1>
+      <PageHeader
+        eyebrow="Promotions"
+        title="Coupons"
+      />
       <CouponsAdmin />
     </div>
   );

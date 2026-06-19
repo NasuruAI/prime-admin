@@ -52,7 +52,8 @@ export default async function AdminDashboard() {
   return (
     <div className="flex flex-col gap-6">
       <header>
-        <p className="text-sm text-ink/50">
+        <span className="eyebrow">Dashboard</span>
+        <p className="mt-2 text-sm text-ink/50">
           {new Date().toLocaleDateString(undefined, {
             weekday: "long",
             month: "long",
@@ -67,7 +68,7 @@ export default async function AdminDashboard() {
       {/* KPI cards */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
         {cards.map((c) => (
-          <div key={c.label} className="admin-card p-5">
+          <div key={c.label} className="admin-card-hover p-5">
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium uppercase tracking-wide text-ink/50">
                 {c.label}

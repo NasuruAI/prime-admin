@@ -1,16 +1,16 @@
 import { HeroEditor } from "@/features/admin/hero-editor";
+import { PageHeader } from "@/components/page-header";
 
 export const metadata = { title: "Storefront" };
 
-export default function StorefrontPage() {
+export default function Page() {
   return (
     <div>
-      <h1 className="mb-1 font-display text-2xl font-bold text-ink">
-        Storefront
-      </h1>
-      <p className="mb-6 text-sm text-ink/55">
-        Control the homepage hero — text, background, and side images.
-      </p>
+      <PageHeader
+        eyebrow="Appearance"
+        title="Storefront"
+        description="Control the homepage hero — text, background, and side images."
+      />
       <HeroEditor />
     </div>
   );
