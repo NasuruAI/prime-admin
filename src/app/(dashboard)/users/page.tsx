@@ -1,11 +1,15 @@
 import { UsersAdmin } from "@/features/admin/users-admin";
+import { PageHeader } from "@/components/page-header";
 
 export const metadata = { title: "Users & roles" };
 
 export default function Page() {
   return (
     <div>
-      <h1 className="mb-6 font-display text-2xl font-bold text-ink">Users & roles</h1>
+      <PageHeader
+        eyebrow="People"
+        title="Users & roles"
+      />
       <UsersAdmin />
     </div>
   );

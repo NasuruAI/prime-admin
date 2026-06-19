@@ -1,14 +1,16 @@
 import { InquiriesAdmin } from "@/features/admin/inquiries-admin";
+import { PageHeader } from "@/components/page-header";
 
-export default function InquiriesPage() {
+export const metadata = { title: "Chat orders" };
+
+export default function Page() {
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold text-ink">Chat orders</h1>
-        <p className="mt-1 text-sm text-ink/55">
-          Leads from the “Chat to order” button (Telegram, WhatsApp, Call).
-        </p>
-      </div>
+    <div>
+      <PageHeader
+        eyebrow="Leads"
+        title="Chat orders"
+        description="Leads from the “Chat to order” button (Telegram, WhatsApp, Call)."
+      />
       <InquiriesAdmin />
     </div>
   );

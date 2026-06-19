@@ -9,6 +9,9 @@
   ::selection {
     @apply bg-accent/20;
   }
+  :focus-visible {
+    @apply outline-none ring-2 ring-accent/40 ring-offset-2 ring-offset-surface;
+  }
 }
 
 @layer components {
@@ -16,8 +19,50 @@
   .admin-card {
     @apply border border-ink/10 bg-white shadow-card;
   }
+  /* Interactive panel (clickable list/grid items). */
+  .admin-card-hover {
+    @apply border border-ink/10 bg-white shadow-card transition duration-200 hover:-translate-y-0.5 hover:shadow-card-hover;
+  }
+  /* Small uppercase section label. */
+  .eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-[0.16em] text-accent;
+  }
   /* Status / label pill. */
   .badge {
     @apply inline-flex items-center bg-ink/5 px-2 py-0.5 text-xs font-medium text-ink/70;
+  }
+  /* Consistent field label across forms. */
+  .field-label {
+    @apply mb-1 block text-xs font-medium text-ink/60;
+  }
+  /* Dense data table. */
+  .admin-table {
+    @apply w-full text-left text-sm;
+  }
+  .admin-table thead th {
+    @apply border-b border-ink/10 py-2.5 pr-4 text-xs font-semibold uppercase tracking-[0.06em] text-ink/45;
+  }
+  .admin-table tbody td {
+    @apply py-3 pr-4 align-middle;
+  }
+  .admin-table tbody tr {
+    @apply border-b border-ink/[0.06] transition-colors hover:bg-surface/60;
+  }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: admin-fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+}
+
+@keyframes admin-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
