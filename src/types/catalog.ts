@@ -93,6 +93,7 @@ export type AdminProduct = {
   slug: string;
   short_id: string;
   description: string;
+  features: string;
   category: number | null;
   brand: number | null;
   fulfillment_type: "internal" | "dropship";
@@ -101,13 +102,19 @@ export type AdminProduct = {
   primary_image: string | null;
   variant_count: number;
   price_from: string | null;
+  rating_avg: string;
+  rating_count: number;
 };
+
+export type PriceTier = { min_qty: number; price: string };
 
 export type AdminVariant = {
   id: string;
   sku: string;
   price: string;
   cost_price: string;
+  moq: number;
+  price_tiers: PriceTier[];
   is_active: boolean;
   is_default: boolean;
   fulfillment_type: "internal" | "dropship";

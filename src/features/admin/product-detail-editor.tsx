@@ -56,6 +56,7 @@ export function ProductDetailEditor({
   const [form, setForm] = useState({
     title: product.title,
     description: product.description,
+    features: product.features ?? "",
     category: product.category ? String(product.category) : "",
     brand: product.brand ? String(product.brand) : "",
     fulfillment_type: product.fulfillment_type,
@@ -121,6 +122,7 @@ export function ProductDetailEditor({
         body: JSON.stringify({
           title: form.title.trim(),
           description: form.description.trim(),
+          features: form.features,
           category: form.category ? Number(form.category) : null,
           brand: form.brand ? Number(form.brand) : null,
           fulfillment_type: form.fulfillment_type,
@@ -243,6 +245,20 @@ export function ProductDetailEditor({
                   setForm((f) => ({ ...f, description: e.target.value }))
                 }
                 className="w-full border border-ink/15 bg-white p-3 text-sm text-ink focus:border-primary focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className={labelCls}>
+                Features (Markdown — shows in the “Features” tab)
+              </label>
+              <textarea
+                value={form.features}
+                rows={5}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, features: e.target.value }))
+                }
+                placeholder={"- 100% cotton\n- Pre-shrunk\n- Machine washable"}
+                className="w-full border border-ink/15 bg-white p-3 font-mono text-sm text-ink focus:border-primary focus:outline-none"
               />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
