@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Banner } from "@/components/ui/banner";
@@ -15,8 +15,41 @@ import type { AdminOptionType, AdminVariant } from "@/types/catalog";
 const selectCls =
   "h-9 w-full border border-ink/15 bg-white px-2 text-sm text-ink focus:border-primary focus:outline-none";
 
-type Draft = { sku: string; price: string; stock: string; is_active: boolean };
+type Draft = {
+  sku: string;
+  price: string;
+  stock: string;
+  is_active: boolean;
+  moq: string;
+  tiers: string;
+};
 type VariantImage = { id: string; thumb: string };
+
+const EMPTY_DRAFT: Draft = {
+  sku: "",
+  price: "",
+  stock: "0",
+  is_active: true,
+  moq: "1",
+  tiers: "",
+};
+
+/** "10:90\n50:80" -> [{min_qty:10, price:"90"}] */
+function parseTiers(text: string): { min_qty: number; price: string }[] {
+  return text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [q, p] = line.split(":").map((s) => s.trim());
+      return { min_qty: Number(q), price: p };
+    })
+    .filter((t) => Number.isFinite(t.min_qty) && t.min_qty > 0 && t.price);
+}
+
+function tiersToText(tiers: { min_qty: number; price: string }[]): string {
+  return (tiers ?? []).map((t) => `${t.min_qty}:${t.price}`).join("\n");
+}
 
 export function VariantManager({
   productId,
@@ -37,23 +70,13 @@ export function VariantManager({
   // key), so only offer "add" for variable products or an empty product.
   const canAdd = hasOptions || variants.length === 0;
   const [editId, setEditId] = useState<string | null>(null);
-  const [draft, setDraft] = useState<Draft>({
-    sku: "",
-    price: "",
-    stock: "0",
-    is_active: true,
-  });
+  const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Create form
   const [adding, setAdding] = useState(false);
-  const [newDraft, setNewDraft] = useState<Draft>({
-    sku: "",
-    price: "",
-    stock: "0",
-    is_active: true,
-  });
+  const [newDraft, setNewDraft] = useState<Draft>(EMPTY_DRAFT);
   const [newOptions, setNewOptions] = useState<Record<number, string>>({});
 
   function startEdit(v: AdminVariant) {
@@ -64,6 +87,8 @@ export function VariantManager({
       price: v.price,
       stock: String(stock[v.id] ?? 0),
       is_active: v.is_active,
+      moq: String(v.moq ?? 1),
+      tiers: tiersToText(v.price_tiers),
     });
   }
 
@@ -84,6 +109,8 @@ export function VariantManager({
           sku: draft.sku.trim(),
           price: draft.price,
           is_active: draft.is_active,
+          moq: Number(draft.moq) || 1,
+          price_tiers: parseTiers(draft.tiers),
         }),
       });
       if (Number(draft.stock) !== (stock[v.id] ?? 0)) {
@@ -125,6 +152,8 @@ export function VariantManager({
         sku: newDraft.sku.trim(),
         price: newDraft.price,
         is_active: newDraft.is_active,
+        moq: Number(newDraft.moq) || 1,
+        price_tiers: parseTiers(newDraft.tiers),
       };
       if (hasOptions) {
         body.option_value_ids = optionTypes.map((ot) =>
@@ -139,7 +168,7 @@ export function VariantManager({
         await setStock(variant.id, Number(newDraft.stock));
       }
       setAdding(false);
-      setNewDraft({ sku: "", price: "", stock: "0", is_active: true });
+      setNewDraft(EMPTY_DRAFT);
       setNewOptions({});
       router.refresh();
     } catch (e) {
@@ -259,6 +288,34 @@ export function VariantManager({
                 className="w-20"
               />
             </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-ink/60">
+                MOQ
+              </label>
+              <Input
+                value={newDraft.moq}
+                onChange={(e) =>
+                  setNewDraft((d) => ({ ...d, moq: e.target.value }))
+                }
+                className="w-20"
+                inputMode="numeric"
+              />
+            </div>
+          </div>
+          <div className="mb-3">
+            <label className="mb-1 block text-xs font-medium text-ink/60">
+              Price breaks — one per line as{" "}
+              <code className="text-ink/70">qty:price</code> (e.g. 50:1800)
+            </label>
+            <textarea
+              value={newDraft.tiers}
+              onChange={(e) =>
+                setNewDraft((d) => ({ ...d, tiers: e.target.value }))
+              }
+              rows={3}
+              placeholder={"10:90\n50:80"}
+              className="w-full max-w-xs border border-ink/15 bg-white p-2 font-mono text-sm focus:border-primary focus:outline-none"
+            />
           </div>
           <div className="flex gap-2">
             <Button type="button" onClick={create} disabled={busy}>
@@ -296,7 +353,8 @@ export function VariantManager({
             <tbody className="divide-y divide-ink/10">
               {variants.map((v) =>
                 editId === v.id ? (
-                  <tr key={v.id} className="bg-surface">
+                  <Fragment key={v.id}>
+                  <tr className="bg-surface">
                     <td className="py-2 pr-4">
                       <VariantImageCell
                         image={variantImages[v.id]}
@@ -367,6 +425,40 @@ export function VariantManager({
                       </div>
                     </td>
                   </tr>
+                  <tr className="bg-surface">
+                    <td colSpan={6} className="px-1 pb-3">
+                      <div className="flex flex-wrap items-start gap-4 border-t border-ink/10 pt-3">
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-ink/60">
+                            MOQ (min order qty)
+                          </label>
+                          <Input
+                            value={draft.moq}
+                            onChange={(e) =>
+                              setDraft((d) => ({ ...d, moq: e.target.value }))
+                            }
+                            className="h-9 w-24"
+                            inputMode="numeric"
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-xs font-medium text-ink/60">
+                            Price breaks — <code>qty:price</code> per line
+                          </label>
+                          <textarea
+                            value={draft.tiers}
+                            onChange={(e) =>
+                              setDraft((d) => ({ ...d, tiers: e.target.value }))
+                            }
+                            rows={3}
+                            placeholder={"10:90\n50:80"}
+                            className="w-full max-w-xs border border-ink/15 bg-white p-2 font-mono text-sm focus:border-primary focus:outline-none"
+                          />
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                  </Fragment>
                 ) : (
                   <tr key={v.id}>
                     <td className="py-2 pr-4">

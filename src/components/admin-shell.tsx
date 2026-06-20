@@ -11,6 +11,7 @@ type NavItem = { href: string; label: string; icon: keyof typeof ICONS };
 const NAV: NavItem[] = [
   { href: "/", label: "Dashboard", icon: "grid" },
   { href: "/catalog", label: "Catalog", icon: "box" },
+  { href: "/reviews", label: "Reviews", icon: "star" },
   { href: "/orders", label: "Orders", icon: "bag" },
   { href: "/inquiries", label: "Chat orders", icon: "chat" },
   { href: "/payments", label: "Payments", icon: "card" },
@@ -217,6 +218,9 @@ const ICONS = {
       <path d="M12 20h9" />
       <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z" />
     </>,
+  ),
+  star: svg(
+    <path d="M12 17.3l-6.2 3.7 1.6-7L2 9.2l7.1-.6L12 2l2.9 6.6 7.1.6-5.4 4.8 1.6 7z" />,
   ),
   layout: svg(
     <>
