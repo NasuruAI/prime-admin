@@ -19,6 +19,7 @@ const NAV: NavItem[] = [
   { href: "/suppliers", label: "Suppliers", icon: "truck" },
   { href: "/users", label: "Users", icon: "users" },
   { href: "/storefront", label: "Storefront", icon: "layout" },
+  { href: "/blog", label: "Blog", icon: "pen" },
   { href: "/settings", label: "Settings", icon: "gear" },
   { href: "/audit", label: "Audit log", icon: "list" },
 ];
@@ -209,6 +210,12 @@ const ICONS = {
   chat: svg(
     <>
       <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z" />
+    </>,
+  ),
+  pen: svg(
+    <>
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z" />
     </>,
   ),
   layout: svg(
