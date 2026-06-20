@@ -56,6 +56,47 @@
   }
 }
 
+/* Rendered-markdown preview (blog editor). */
+.md {
+  @apply text-sm leading-relaxed text-ink/80;
+}
+.md h1 {
+  @apply mb-3 mt-5 font-display text-2xl font-bold text-ink;
+}
+.md h2 {
+  @apply mb-2 mt-5 font-display text-xl font-bold text-ink;
+}
+.md h3 {
+  @apply mb-2 mt-4 font-display text-base font-bold text-ink;
+}
+.md p {
+  @apply my-3;
+}
+.md ul {
+  @apply my-3 list-disc pl-5;
+}
+.md ol {
+  @apply my-3 list-decimal pl-5;
+}
+.md li {
+  @apply my-1;
+}
+.md a {
+  @apply text-primary underline;
+}
+.md blockquote {
+  @apply my-3 border-l-2 border-ink/15 pl-4 italic text-ink/60;
+}
+.md code {
+  @apply bg-ink/5 px-1 py-0.5 text-[0.85em];
+}
+.md img {
+  @apply my-3 max-w-full;
+}
+.md strong {
+  @apply font-semibold text-ink;
+}
+
 @keyframes admin-fade-in {
   from {
     opacity: 0;
