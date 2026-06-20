@@ -1,15 +1,19 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
+/** Only allow same-site relative redirects (no open-redirect / off-site). */
+function safeNext(raw: string | null): string {
+  return raw && raw.startsWith("/") && !raw.startsWith("//") ? raw : "/";
+}
+
 export function LoginForm() {
-  const router = useRouter();
   const params = useSearchParams();
-  const next = params.get("next") || "/";
+  const next = safeNext(params.get("next"));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -36,8 +40,9 @@ export function LoginForm() {
       setBusy(false);
       return;
     }
-    router.replace(next);
-    router.refresh();
+    // Hard navigation so the destination renders with the freshly set cookie
+    // (a soft router.replace + refresh can race and stay on the login page).
+    window.location.assign(next);
   }
 
   return (
