@@ -51,14 +51,16 @@ export function BarChart({
   if (data.every((d) => d.value === 0)) return <Empty />;
   const max = Math.max(1, ...data.map((d) => d.value));
   return (
-    <div className="flex h-44 items-end gap-1">
-      {data.map((d, i) => (
-        <div
-          key={i}
-          className="group flex flex-1 flex-col items-center gap-1.5"
-          title={d.hint ?? `${d.label}: ${formatValue ? formatValue(d.value) : d.value}`}
-        >
-          <div className="flex w-full flex-1 items-end">
+    <div>
+      {/* Bars: each column is full-height (definite) so the bar's % height
+          resolves correctly — `items-end` alone would collapse them. */}
+      <div className="flex h-44 items-end gap-1">
+        {data.map((d, i) => (
+          <div
+            key={i}
+            className="group flex h-full flex-1 flex-col justify-end"
+            title={d.hint ?? `${d.label}: ${formatValue ? formatValue(d.value) : d.value}`}
+          >
             <div
               className="w-full bg-primary/80 transition group-hover:bg-accent"
               style={{
@@ -67,9 +69,19 @@ export function BarChart({
               }}
             />
           </div>
-          <span className="text-[9px] leading-none text-ink/40">{d.label}</span>
-        </div>
-      ))}
+        ))}
+      </div>
+      {/* Labels aligned under each bar via matching flex-1 + gap. */}
+      <div className="mt-1.5 flex gap-1">
+        {data.map((d, i) => (
+          <span
+            key={i}
+            className="flex-1 text-center text-[9px] leading-none text-ink/40"
+          >
+            {d.label}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
