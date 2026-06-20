@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { adminCall } from "@/lib/admin-client";
+import { uploadToCloudinary } from "@/lib/cloudinary";
+import { cloudinaryUrl } from "@/lib/env";
 
 type Setting = {
   key: string;
@@ -74,6 +76,84 @@ function Toggle({
         }`}
       />
     </button>
+  );
+}
+
+/** Image upload for asset settings (e.g. the store logo) — stores a public_id. */
+function ImageField({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (publicId: string) => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [preview, setPreview] = useState(cloudinaryUrl(value));
+
+  useEffect(() => {
+    setPreview(cloudinaryUrl(value));
+  }, [value]);
+
+  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const { url, publicId } = await uploadToCloudinary(file);
+      setPreview(url);
+      onChange(publicId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Upload failed.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-4">
+      <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden border border-ink/10 bg-surface">
+        {preview ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={preview} alt="Logo" className="h-full w-full object-contain p-1.5" />
+        ) : (
+          <span className="text-[10px] text-ink/40">No image</span>
+        )}
+      </div>
+      <div className="flex flex-col items-start gap-1.5">
+        <label
+          className={`inline-flex h-9 cursor-pointer items-center border border-ink/15 bg-white px-4 text-sm font-medium transition ${
+            busy
+              ? "text-ink/40"
+              : "text-ink hover:border-primary hover:text-primary"
+          }`}
+        >
+          {busy ? "Uploading…" : value ? "Replace image" : "Upload image"}
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            disabled={busy}
+            onChange={onFile}
+          />
+        </label>
+        {value && (
+          <button
+            type="button"
+            onClick={() => {
+              onChange("");
+              setPreview("");
+            }}
+            className="text-xs text-ink/50 transition hover:text-accent"
+          >
+            Remove
+          </button>
+        )}
+        {error && <span className="text-xs text-accent">{error}</span>}
+      </div>
+    </div>
   );
 }
 
@@ -157,6 +237,15 @@ export function SettingsEditor() {
   const sections = [...new Set(settings.map((s) => s.section))];
 
   function field(s: Setting) {
+    // Asset settings (logo / image public_ids) get an upload widget.
+    if (s.key.endsWith("_public_id") || s.key.includes("logo")) {
+      return (
+        <ImageField
+          value={String(draft[s.key] ?? "")}
+          onChange={(pid) => setDraft((d) => ({ ...d, [s.key]: pid }))}
+        />
+      );
+    }
     if (s.type === "boolean") {
       return (
         <Toggle
