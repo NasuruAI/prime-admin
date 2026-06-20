@@ -34,6 +34,7 @@ export function ProductCreator() {
   const [supplierId, setSupplierId] = useState("");
   const [discountOn, setDiscountOn] = useState(false);
   const [discountPercent, setDiscountPercent] = useState("");
+  const [flashOn, setFlashOn] = useState(false);
 
   // Featured image (uploaded to Cloudinary; we submit its public_id).
   const [featuredUrl, setFeaturedUrl] = useState("");
@@ -107,6 +108,7 @@ export function ProductCreator() {
         fulfillment_type: fulfillment,
         supplier: fulfillment === "dropship" && supplierId ? supplierId : null,
         is_active: true,
+        is_flash_sale: flashOn,
         discount_percent: discountOn ? discountPercent || "0" : "0",
         image_public_id: featuredPublicId,
         kind,
@@ -139,6 +141,7 @@ export function ProductCreator() {
       setNewCategory("");
       setFeaturedUrl("");
       setFeaturedPublicId("");
+      setFlashOn(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not create product.");
     } finally {
@@ -299,6 +302,21 @@ export function ProductCreator() {
                 </span>
               </div>
             )}
+          </div>
+
+          {/* Flash sale */}
+          <div className="border-t border-ink/10 pt-4">
+            <label className="flex items-center gap-2 text-sm font-medium text-ink">
+              <input
+                type="checkbox"
+                checked={flashOn}
+                onChange={(e) => setFlashOn(e.target.checked)}
+              />
+              ⚡ Add to Flash Sale
+            </label>
+            <p className="mt-1 text-xs text-ink/55">
+              Groups this product into the storefront Flash Sale section.
+            </p>
           </div>
         </div>
       </section>

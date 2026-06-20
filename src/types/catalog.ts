@@ -98,6 +98,7 @@ export type AdminProduct = {
   brand: number | null;
   fulfillment_type: "internal" | "dropship";
   is_active: boolean;
+  is_flash_sale: boolean;
   discount_percent: string;
   primary_image: string | null;
   variant_count: number;
