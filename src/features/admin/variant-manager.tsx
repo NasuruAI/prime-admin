@@ -15,13 +15,14 @@ import type { AdminOptionType, AdminVariant } from "@/types/catalog";
 const selectCls =
   "h-9 w-full border border-ink/15 bg-white px-2 text-sm text-ink focus:border-primary focus:outline-none";
 
+type TierRow = { min_qty: string; price: string };
 type Draft = {
   sku: string;
   price: string;
   stock: string;
   is_active: boolean;
   moq: string;
-  tiers: string;
+  tiers: TierRow[];
 };
 type VariantImage = { id: string; thumb: string };
 
@@ -31,24 +32,130 @@ const EMPTY_DRAFT: Draft = {
   stock: "0",
   is_active: true,
   moq: "1",
-  tiers: "",
+  tiers: [],
 };
 
-/** "10:90\n50:80" -> [{min_qty:10, price:"90"}] */
-function parseTiers(text: string): { min_qty: number; price: string }[] {
-  return text
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line) => {
-      const [q, p] = line.split(":").map((s) => s.trim());
-      return { min_qty: Number(q), price: p };
-    })
-    .filter((t) => Number.isFinite(t.min_qty) && t.min_qty > 0 && t.price);
+/** Existing tier JSON -> editable rows. */
+function rowsFromTiers(tiers: { min_qty: number; price: string }[]): TierRow[] {
+  return (tiers ?? [])
+    .map((t) => ({ min_qty: String(t.min_qty), price: String(t.price) }))
+    .sort((a, b) => Number(a.min_qty) - Number(b.min_qty));
 }
 
-function tiersToText(tiers: { min_qty: number; price: string }[]): string {
-  return (tiers ?? []).map((t) => `${t.min_qty}:${t.price}`).join("\n");
+/** Editable rows -> clean tier payload for the API. */
+function tiersPayload(rows: TierRow[]): { min_qty: number; price: string }[] {
+  return rows
+    .map((r) => ({ min_qty: Number(r.min_qty), price: r.price.trim() }))
+    .filter((t) => Number.isFinite(t.min_qty) && t.min_qty > 1 && t.price);
+}
+
+function fmtNum(value: string): string {
+  const n = Number(value);
+  return Number.isFinite(n) ? n.toLocaleString() : value;
+}
+
+/**
+ * Structured price-break editor. The base Price covers the first range (from the
+ * MOQ); each row sets a cheaper unit price "from N units up". A live preview
+ * spells out the resulting ranges so there's no ambiguity.
+ */
+function TierEditor({
+  basePrice,
+  moq,
+  rows,
+  onChange,
+}: {
+  basePrice: string;
+  moq: string;
+  rows: TierRow[];
+  onChange: (rows: TierRow[]) => void;
+}) {
+  const update = (i: number, patch: Partial<TierRow>) =>
+    onChange(rows.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
+  const add = () => onChange([...rows, { min_qty: "", price: "" }]);
+  const remove = (i: number) => onChange(rows.filter((_, idx) => idx !== i));
+
+  // Build the preview ranges: base tier (from MOQ) + each valid break, sorted.
+  const start = Math.max(Number(moq) || 1, 1);
+  const breaks = [
+    { min: start, price: basePrice.trim() },
+    ...tiersPayload(rows).map((t) => ({ min: t.min_qty, price: t.price })),
+  ]
+    .filter((b) => b.price)
+    .sort((a, b) => a.min - b.min);
+
+  return (
+    <div>
+      <label className="mb-1 block text-xs font-medium text-ink/60">
+        Volume pricing — cheaper unit price for bigger orders
+      </label>
+      <div className="flex flex-col gap-2">
+        {rows.length === 0 && (
+          <p className="text-xs text-ink/45">
+            No price breaks. The base price applies to every quantity.
+          </p>
+        )}
+        {rows.map((r, i) => (
+          <div key={i} className="flex items-center gap-2 text-sm">
+            <span className="text-ink/55">From</span>
+            <Input
+              value={r.min_qty}
+              onChange={(e) => update(i, { min_qty: e.target.value })}
+              className="h-9 w-20"
+              inputMode="numeric"
+              placeholder="6"
+            />
+            <span className="text-ink/55">units →</span>
+            <Input
+              value={r.price}
+              onChange={(e) => update(i, { price: e.target.value })}
+              className="h-9 w-28"
+              inputMode="decimal"
+              placeholder="9000"
+            />
+            <span className="text-ink/55">/ unit</span>
+            <button
+              type="button"
+              onClick={() => remove(i)}
+              aria-label="Remove price break"
+              className="ml-1 flex h-7 w-7 items-center justify-center text-ink/40 transition hover:text-accent"
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+        <button
+          type="button"
+          onClick={add}
+          className="self-start text-xs font-semibold text-primary transition hover:text-accent"
+        >
+          + Add price break
+        </button>
+      </div>
+
+      {breaks.length > 0 && (
+        <div className="mt-3 border border-ink/10 bg-white p-3 text-xs">
+          <span className="font-semibold text-ink/60">Customers pay</span>
+          <ul className="mt-1.5 space-y-1">
+            {breaks.map((b, i) => {
+              const next = breaks[i + 1];
+              const label = next
+                ? `${b.min}–${next.min - 1} units`
+                : `${b.min}+ units`;
+              return (
+                <li key={i} className="flex justify-between gap-4 text-ink/70">
+                  <span>{label}</span>
+                  <span className="font-medium text-ink">
+                    {fmtNum(b.price)} / unit
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function VariantManager({
@@ -88,7 +195,7 @@ export function VariantManager({
       stock: String(stock[v.id] ?? 0),
       is_active: v.is_active,
       moq: String(v.moq ?? 1),
-      tiers: tiersToText(v.price_tiers),
+      tiers: rowsFromTiers(v.price_tiers),
     });
   }
 
@@ -110,7 +217,7 @@ export function VariantManager({
           price: draft.price,
           is_active: draft.is_active,
           moq: Number(draft.moq) || 1,
-          price_tiers: parseTiers(draft.tiers),
+          price_tiers: tiersPayload(draft.tiers),
         }),
       });
       if (Number(draft.stock) !== (stock[v.id] ?? 0)) {
@@ -153,7 +260,7 @@ export function VariantManager({
         price: newDraft.price,
         is_active: newDraft.is_active,
         moq: Number(newDraft.moq) || 1,
-        price_tiers: parseTiers(newDraft.tiers),
+        price_tiers: tiersPayload(newDraft.tiers),
       };
       if (hasOptions) {
         body.option_value_ids = optionTypes.map((ot) =>
@@ -302,19 +409,12 @@ export function VariantManager({
               />
             </div>
           </div>
-          <div className="mb-3">
-            <label className="mb-1 block text-xs font-medium text-ink/60">
-              Price breaks — one per line as{" "}
-              <code className="text-ink/70">qty:price</code> (e.g. 50:1800)
-            </label>
-            <textarea
-              value={newDraft.tiers}
-              onChange={(e) =>
-                setNewDraft((d) => ({ ...d, tiers: e.target.value }))
-              }
-              rows={3}
-              placeholder={"10:90\n50:80"}
-              className="w-full max-w-xs border border-ink/15 bg-white p-2 font-mono text-sm focus:border-primary focus:outline-none"
+          <div className="mb-3 max-w-md">
+            <TierEditor
+              basePrice={newDraft.price}
+              moq={newDraft.moq}
+              rows={newDraft.tiers}
+              onChange={(tiers) => setNewDraft((d) => ({ ...d, tiers }))}
             />
           </div>
           <div className="flex gap-2">
@@ -427,7 +527,7 @@ export function VariantManager({
                   </tr>
                   <tr className="bg-surface">
                     <td colSpan={6} className="px-1 pb-3">
-                      <div className="flex flex-wrap items-start gap-4 border-t border-ink/10 pt-3">
+                      <div className="flex flex-wrap items-start gap-6 border-t border-ink/10 pt-3">
                         <div>
                           <label className="mb-1 block text-xs font-medium text-ink/60">
                             MOQ (min order qty)
@@ -441,18 +541,14 @@ export function VariantManager({
                             inputMode="numeric"
                           />
                         </div>
-                        <div>
-                          <label className="mb-1 block text-xs font-medium text-ink/60">
-                            Price breaks — <code>qty:price</code> per line
-                          </label>
-                          <textarea
-                            value={draft.tiers}
-                            onChange={(e) =>
-                              setDraft((d) => ({ ...d, tiers: e.target.value }))
+                        <div className="min-w-[20rem] flex-1">
+                          <TierEditor
+                            basePrice={draft.price}
+                            moq={draft.moq}
+                            rows={draft.tiers}
+                            onChange={(tiers) =>
+                              setDraft((d) => ({ ...d, tiers }))
                             }
-                            rows={3}
-                            placeholder={"10:90\n50:80"}
-                            className="w-full max-w-xs border border-ink/15 bg-white p-2 font-mono text-sm focus:border-primary focus:outline-none"
                           />
                         </div>
                       </div>
