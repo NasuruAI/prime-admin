@@ -61,6 +61,7 @@ export function ProductDetailEditor({
     brand: product.brand ? String(product.brand) : "",
     fulfillment_type: product.fulfillment_type,
     is_active: product.is_active,
+    is_flash_sale: product.is_flash_sale,
     discount_on: Number(product.discount_percent) > 0,
     discount_percent: product.discount_percent ?? "0",
   });
@@ -127,6 +128,7 @@ export function ProductDetailEditor({
           brand: form.brand ? Number(form.brand) : null,
           fulfillment_type: form.fulfillment_type,
           is_active: form.is_active,
+          is_flash_sale: form.is_flash_sale,
           discount_percent: form.discount_on ? form.discount_percent || "0" : "0",
         }),
       });
@@ -316,16 +318,28 @@ export function ProductDetailEditor({
                   <option value="dropship">Dropship supplier</option>
                 </select>
               </div>
-              <label className="flex items-end gap-2 pb-2 text-sm text-ink/80">
-                <input
-                  type="checkbox"
-                  checked={form.is_active}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, is_active: e.target.checked }))
-                  }
-                />
-                Active (visible in store)
-              </label>
+              <div className="flex flex-col gap-2 pb-2">
+                <label className="flex items-center gap-2 text-sm text-ink/80">
+                  <input
+                    type="checkbox"
+                    checked={form.is_active}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, is_active: e.target.checked }))
+                    }
+                  />
+                  Active (visible in store)
+                </label>
+                <label className="flex items-center gap-2 text-sm text-ink/80">
+                  <input
+                    type="checkbox"
+                    checked={form.is_flash_sale}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, is_flash_sale: e.target.checked }))
+                    }
+                  />
+                  ⚡ Flash sale
+                </label>
+              </div>
             </div>
 
             {/* Discount */}
