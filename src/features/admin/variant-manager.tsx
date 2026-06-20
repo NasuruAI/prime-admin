@@ -75,6 +75,18 @@ function TierEditor({
   const add = () => onChange([...rows, { min_qty: "", price: "" }]);
   const remove = (i: number) => onChange(rows.filter((_, idx) => idx !== i));
 
+  // Flag breaks that aren't a real saving (>= base, or >= a smaller-qty break).
+  const baseNum = Number(basePrice) || Infinity;
+  const invalid = new Set<number>();
+  let prevValid = baseNum;
+  for (const x of rows
+    .map((r, i) => ({ i, q: Number(r.min_qty), p: Number(r.price) }))
+    .filter((x) => x.q > 1 && x.p > 0)
+    .sort((a, b) => a.q - b.q)) {
+    if (!(x.p < prevValid)) invalid.add(x.i);
+    else prevValid = x.p;
+  }
+
   // Build the preview ranges: base tier (from MOQ) + each valid break, sorted.
   const start = Math.max(Number(moq) || 1, 1);
   const breaks = [
@@ -109,7 +121,7 @@ function TierEditor({
             <Input
               value={r.price}
               onChange={(e) => update(i, { price: e.target.value })}
-              className="h-9 w-28"
+              className={`h-9 w-28 ${invalid.has(i) ? "border-accent" : ""}`}
               inputMode="decimal"
               placeholder="9000"
             />
@@ -124,6 +136,12 @@ function TierEditor({
             </button>
           </div>
         ))}
+        {invalid.size > 0 && (
+          <p className="text-xs font-medium text-accent">
+            Each price break must be lower than the base price and than smaller
+            quantities — bigger orders should cost less per unit.
+          </p>
+        )}
         <button
           type="button"
           onClick={add}
