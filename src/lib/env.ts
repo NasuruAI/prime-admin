@@ -15,4 +15,12 @@ export const env = {
     process.env.API_INTERNAL_BASE_URL ??
     process.env.NEXT_PUBLIC_API_BASE_URL ??
     "http://localhost:8000/api/v1",
+  /** Cloudinary cloud name (public) — used to preview assets from a public_id. */
+  cloudinaryCloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ?? "",
 } as const;
+
+/** Build a Cloudinary delivery URL from a stored public_id (empty if unset). */
+export function cloudinaryUrl(publicId: string): string {
+  if (!publicId || !env.cloudinaryCloudName) return "";
+  return `https://res.cloudinary.com/${env.cloudinaryCloudName}/image/upload/${publicId}`;
+}
