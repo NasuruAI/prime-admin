@@ -22,3 +22,24 @@ export const getStoreName = cache(async (): Promise<string> => {
     return FALLBACK_NAME;
   }
 });
+
+/** Admin-set brand colours, so the back-office matches the storefront theme. */
+export const getStoreBrand = cache(
+  async (): Promise<{ primary: string; accent: string }> => {
+    const fallback = { primary: "#6E0D25", accent: "#C9184A" };
+    try {
+      const data = await backendFetch<{ settings: Record<string, unknown> }>(
+        "/config/",
+      );
+      const s = data.settings ?? {};
+      const pick = (key: string, fb: string) =>
+        typeof s[key] === "string" && s[key] ? (s[key] as string) : fb;
+      return {
+        primary: pick("branding.primary_color", fallback.primary),
+        accent: pick("branding.accent_color", fallback.accent),
+      };
+    } catch {
+      return fallback;
+    }
+  },
+);

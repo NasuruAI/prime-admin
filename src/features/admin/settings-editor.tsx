@@ -246,6 +246,31 @@ export function SettingsEditor() {
         />
       );
     }
+    // Brand colours get a swatch + hex field.
+    if (s.key.endsWith("_color")) {
+      const value = String(draft[s.key] ?? "#000000");
+      return (
+        <div className="flex items-center gap-3">
+          <input
+            type="color"
+            value={/^#[0-9a-fA-F]{6}$/.test(value) ? value : "#000000"}
+            onChange={(e) =>
+              setDraft((d) => ({ ...d, [s.key]: e.target.value }))
+            }
+            aria-label={`${s.key} colour picker`}
+            className="h-10 w-12 cursor-pointer rounded-md border border-ink/15 bg-white p-1"
+          />
+          <Input
+            value={value}
+            onChange={(e) =>
+              setDraft((d) => ({ ...d, [s.key]: e.target.value }))
+            }
+            className="w-32 font-mono"
+            placeholder="#6E0D25"
+          />
+        </div>
+      );
+    }
     if (s.type === "boolean") {
       return (
         <Toggle
