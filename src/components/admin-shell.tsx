@@ -28,10 +28,12 @@ const NAV: NavItem[] = [
 export function AdminShell({
   email,
   storeName,
+  logoUrl = "",
   children,
 }: {
   email: string;
   storeName: string;
+  logoUrl?: string;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -43,15 +45,29 @@ export function AdminShell({
   const sidebar = (
     <div className="flex h-full flex-col bg-ink text-blush">
       <div className="flex h-16 items-center gap-2 border-b border-white/10 px-5">
-        <span className="flex h-8 w-8 items-center justify-center bg-accent font-display text-sm font-bold text-white">
-          {initials}
-        </span>
-        <div className="leading-tight">
-          <div className="font-display text-base font-bold">{storeName}</div>
-          <div className="text-[10px] uppercase tracking-[0.2em] text-blush/50">
-            Admin
-          </div>
-        </div>
+        {logoUrl ? (
+          // Admin-uploaded logo (external Cloudinary URL) — same as storefront.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={logoUrl}
+            alt={storeName}
+            className="h-8 w-auto max-w-[160px] object-contain"
+          />
+        ) : (
+          <>
+            <span className="flex h-8 w-8 items-center justify-center rounded-md bg-accent font-display text-sm font-bold text-white">
+              {initials}
+            </span>
+            <div className="leading-tight">
+              <div className="font-display text-base font-bold">
+                {storeName}
+              </div>
+              <div className="text-[10px] uppercase tracking-[0.2em] text-blush/50">
+                Admin
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 py-4">
@@ -128,9 +144,18 @@ export function AdminShell({
           >
             {ICONS.menu}
           </button>
-          <div className="font-display text-lg font-bold text-ink lg:hidden">
-            {storeName}
-          </div>
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={logoUrl}
+              alt={storeName}
+              className="h-7 w-auto max-w-[140px] object-contain lg:hidden"
+            />
+          ) : (
+            <div className="font-display text-lg font-bold text-ink lg:hidden">
+              {storeName}
+            </div>
+          )}
           <div className="ml-auto flex items-center gap-4">
             <span className="hidden text-sm text-ink/55 sm:block">{email}</span>
             <LogoutButton />
