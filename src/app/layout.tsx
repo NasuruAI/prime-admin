@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 
-import { getStoreName } from "@/lib/config";
+import { getStoreBrand, getStoreName } from "@/lib/config";
+import { brandStyle } from "@/lib/theme";
 
 import "./globals.css";
 
@@ -27,11 +28,16 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const brand = await getStoreBrand();
   return (
-    <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
+    <html
+      lang="en"
+      className={`${inter.variable} ${playfair.variable}`}
+      style={brandStyle(brand.primary, brand.accent)}
+    >
       <body className="min-h-screen font-sans">{children}</body>
     </html>
   );

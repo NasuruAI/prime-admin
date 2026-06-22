@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Brand colour channels (R G B) — overridden inline from store settings. */
+  --brand-primary: 110 13 37; /* #6E0D25 */
+  --brand-accent: 201 24 74; /* #C9184A */
+}
+
 @layer base {
   body {
     @apply bg-surface text-ink antialiased;
@@ -17,11 +23,11 @@
 @layer components {
   /* A standard content panel. */
   .admin-card {
-    @apply border border-ink/10 bg-white shadow-card;
+    @apply rounded-xl border border-ink/10 bg-white shadow-card;
   }
   /* Interactive panel (clickable list/grid items). */
   .admin-card-hover {
-    @apply border border-ink/10 bg-white shadow-card transition duration-200 hover:-translate-y-0.5 hover:shadow-card-hover;
+    @apply rounded-xl border border-ink/10 bg-white shadow-card transition duration-200 hover:-translate-y-0.5 hover:shadow-card-hover;
   }
   /* Small uppercase section label. */
   .eyebrow {
@@ -29,7 +35,7 @@
   }
   /* Status / label pill. */
   .badge {
-    @apply inline-flex items-center bg-ink/5 px-2 py-0.5 text-xs font-medium text-ink/70;
+    @apply inline-flex items-center rounded-full bg-ink/5 px-2 py-0.5 text-xs font-medium text-ink/70;
   }
   /* Consistent field label across forms. */
   .field-label {
