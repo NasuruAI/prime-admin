@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 
-import { getStoreBrand, getStoreName } from "@/lib/config";
+import { getStoreBrand, getStoreLogoUrl, getStoreName } from "@/lib/config";
 import { brandStyle } from "@/lib/theme";
 
 import "./globals.css";
@@ -18,13 +18,17 @@ const playfair = Playfair_Display({
 });
 
 export async function generateMetadata(): Promise<Metadata> {
-  const storeName = await getStoreName();
+  const [storeName, logoUrl] = await Promise.all([
+    getStoreName(),
+    getStoreLogoUrl(),
+  ]);
   return {
     title: {
       default: `${storeName} Admin`,
       template: `%s · ${storeName} Admin`,
     },
     description: `Back-office for ${storeName}.`,
+    icons: logoUrl ? { icon: logoUrl } : undefined,
   };
 }
 

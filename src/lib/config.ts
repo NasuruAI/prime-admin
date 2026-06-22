@@ -23,6 +23,22 @@ export const getStoreName = cache(async (): Promise<string> => {
   }
 });
 
+/** Delivery URL of the admin-uploaded store logo (or "" to use the wordmark). */
+export const getStoreLogoUrl = cache(async (): Promise<string> => {
+  try {
+    const data = await backendFetch<{ settings: Record<string, unknown> }>(
+      "/config/",
+    );
+    const id = data.settings?.["store.logo_public_id"];
+    const cloud = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ?? "";
+    return typeof id === "string" && id && cloud
+      ? `https://res.cloudinary.com/${cloud}/image/upload/f_auto,q_auto,h_64/${id}`
+      : "";
+  } catch {
+    return "";
+  }
+});
+
 /** Admin-set brand colours, so the back-office matches the storefront theme. */
 export const getStoreBrand = cache(
   async (): Promise<{ primary: string; accent: string }> => {
