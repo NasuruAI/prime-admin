@@ -15,6 +15,8 @@ export type Category = {
   slug: string;
   parent: number | null;
   position: number;
+  is_active?: boolean;
+  image_public_id?: string;
 };
 
 export type Brand = { id: number; name: string; slug: string };

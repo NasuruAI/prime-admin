@@ -11,6 +11,7 @@ type NavItem = { href: string; label: string; icon: keyof typeof ICONS };
 const NAV: NavItem[] = [
   { href: "/", label: "Dashboard", icon: "grid" },
   { href: "/catalog", label: "Catalog", icon: "box" },
+  { href: "/categories", label: "Categories", icon: "tag" },
   { href: "/reviews", label: "Reviews", icon: "star" },
   { href: "/orders", label: "Orders", icon: "bag" },
   { href: "/inquiries", label: "Chat orders", icon: "chat" },
