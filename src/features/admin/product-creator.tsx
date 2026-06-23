@@ -29,6 +29,8 @@ export function ProductCreator() {
   const [description, setDescription] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [newCategory, setNewCategory] = useState("");
+  const [newCategoryImageUrl, setNewCategoryImageUrl] = useState("");
+  const [newCategoryImage, setNewCategoryImage] = useState("");
   const [brandId, setBrandId] = useState("");
   const [fulfillment, setFulfillment] = useState("internal");
   const [supplierId, setSupplierId] = useState("");
@@ -104,6 +106,7 @@ export function ProductCreator() {
         description: description.trim(),
         category: categoryId ? Number(categoryId) : null,
         new_category: newCategory.trim(),
+        new_category_image: newCategory.trim() ? newCategoryImage : "",
         brand: brandId ? Number(brandId) : null,
         fulfillment_type: fulfillment,
         supplier: fulfillment === "dropship" && supplierId ? supplierId : null,
@@ -139,6 +142,8 @@ export function ProductCreator() {
       setDefaultPrice("");
       setSkuPrefix("");
       setNewCategory("");
+      setNewCategoryImageUrl("");
+      setNewCategoryImage("");
       setFeaturedUrl("");
       setFeaturedPublicId("");
       setFlashOn(false);
@@ -212,6 +217,20 @@ export function ProductCreator() {
                 placeholder="…or create a new category"
                 className="mt-2"
               />
+              {newCategory.trim() && (
+                <div className="mt-2">
+                  <span className="field-label">New category image</span>
+                  <div className="max-w-[10rem]">
+                    <CloudinaryUpload
+                      value={newCategoryImageUrl}
+                      onChange={(url, publicId) => {
+                        setNewCategoryImageUrl(url);
+                        setNewCategoryImage(publicId ?? "");
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
             <div>
               <label className={labelCls}>Brand</label>
