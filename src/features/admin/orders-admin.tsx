@@ -66,6 +66,25 @@ export function OrdersAdmin() {
     }
   }
 
+  async function markShipped(number: string) {
+    // Optional tracking; Cancel aborts, blank ships with no tracking.
+    const tracking = window.prompt(
+      "Mark this order shipped?\nThis emails the customer that their order has shipped.\n\nTracking number (optional):",
+      "",
+    );
+    if (tracking === null) return;
+    setError(null);
+    try {
+      await adminCall(`/orders/${number}/mark-shipped/`, {
+        method: "POST",
+        body: JSON.stringify({ tracking_number: tracking.trim() }),
+      });
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not mark shipped.");
+    }
+  }
+
   return (
     <div className="flex flex-col gap-4">
       {error && <Banner tone="error">{error}</Banner>}
@@ -101,6 +120,15 @@ export function OrdersAdmin() {
                   <td className="px-4 py-3 text-ink/70">{o.contact_email}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-2">
+                      {(o.status === "routing" ||
+                        o.status === "partially_fulfilled") && (
+                        <Button
+                          type="button"
+                          onClick={() => markShipped(o.number)}
+                        >
+                          Mark shipped
+                        </Button>
+                      )}
                       <select
                         defaultValue=""
                         onChange={(e) =>
