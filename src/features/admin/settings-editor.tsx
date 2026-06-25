@@ -169,6 +169,10 @@ export function SettingsEditor() {
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+
+  const toggleSection = (section: string) =>
+    setCollapsed((c) => ({ ...c, [section]: !c[section] }));
 
   async function load() {
     const data = await adminCall<{ settings: Setting[] }>(
@@ -327,22 +331,54 @@ export function SettingsEditor() {
 
   return (
     <div className="flex flex-col gap-5 pb-24">
-      {sections.map((section, i) => (
-        <section key={section} className="admin-card overflow-hidden">
-          <div className="flex items-center justify-between border-b border-ink/10 px-6 py-4">
-            <div>
-              <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-accent">
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              <h2 className="font-display text-base font-bold text-ink">
-                {sectionLabel(section)}
-              </h2>
-            </div>
-          </div>
-          <div className="divide-y divide-ink/[0.07]">
-            {settings
-              .filter((s) => s.section === section)
-              .map((s) => {
+      {sections.map((section, i) => {
+        const isOpen = !collapsed[section];
+        const sectionDirty = settings.filter(
+          (s) => s.section === section && isDirty(s),
+        ).length;
+        return (
+          <section key={section} className="admin-card overflow-hidden">
+            <button
+              type="button"
+              onClick={() => toggleSection(section)}
+              aria-expanded={isOpen}
+              className="flex w-full items-center justify-between gap-3 px-6 py-4 text-left transition-colors hover:bg-ink/[0.015]"
+            >
+              <div>
+                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-accent">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <h2 className="font-display text-base font-bold text-ink">
+                  {sectionLabel(section)}
+                </h2>
+              </div>
+              <div className="flex items-center gap-3">
+                {sectionDirty > 0 && (
+                  <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[11px] font-semibold text-accent">
+                    {sectionDirty} unsaved
+                  </span>
+                )}
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                  className={`text-ink/40 transition-transform ${isOpen ? "" : "-rotate-90"}`}
+                >
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+              </div>
+            </button>
+            {isOpen && (
+              <div className="divide-y divide-ink/[0.07] border-t border-ink/10">
+                {settings
+                  .filter((s) => s.section === section)
+                  .map((s) => {
                 const dirty = isDirty(s);
                 return (
                   <div
@@ -375,10 +411,12 @@ export function SettingsEditor() {
                     <div>{field(s)}</div>
                   </div>
                 );
-              })}
-          </div>
-        </section>
-      ))}
+                  })}
+              </div>
+            )}
+          </section>
+        );
+      })}
 
       {/* Sticky save bar */}
       <div className="fixed bottom-0 left-0 right-0 z-10 border-t border-ink/10 bg-white/90 px-4 py-3 backdrop-blur lg:left-64 lg:px-8">
