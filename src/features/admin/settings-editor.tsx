@@ -8,6 +8,8 @@ import { adminCall } from "@/lib/admin-client";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { cloudinaryUrl } from "@/lib/env";
 
+import { SocialLinksEditor } from "./social-links-editor";
+
 type Setting = {
   key: string;
   section: string;
@@ -237,6 +239,15 @@ export function SettingsEditor() {
   const sections = [...new Set(settings.map((s) => s.section))];
 
   function field(s: Setting) {
+    // Footer social links get a dedicated add/remove list editor.
+    if (s.key === "footer.social_links") {
+      return (
+        <SocialLinksEditor
+          value={(draft[s.key] as { name: string; url: string; icon: string }[]) ?? []}
+          onChange={(links) => setDraft((d) => ({ ...d, [s.key]: links }))}
+        />
+      );
+    }
     // Asset settings (logo / image public_ids) get an upload widget.
     if (s.key.endsWith("_public_id") || s.key.includes("logo")) {
       return (
