@@ -122,6 +122,14 @@ export type AdminVariant = {
   is_default: boolean;
   fulfillment_type: "internal" | "dropship";
   options_key: string;
+  options: VariantOption[];
+};
+
+export type VariantOption = {
+  type_id: number;
+  type: string;
+  value_id: number;
+  value: string;
 };
 
 export type AdminOptionType = {

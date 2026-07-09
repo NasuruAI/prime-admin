@@ -11,7 +11,30 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { adminCall } from "@/lib/admin-client";
 import { uploadToCloudinary } from "@/lib/cloudinary";
-import type { AdminOptionType, AdminVariant } from "@/types/catalog";
+import type {
+  AdminOptionType,
+  AdminVariant,
+  VariantOption,
+} from "@/types/catalog";
+
+/** Small pills showing a variant's option values, e.g. "Size: M · Color: Red". */
+function OptionBadges({ options }: { options: VariantOption[] }) {
+  if (!options || options.length === 0)
+    return <span className="text-xs text-ink/30">—</span>;
+  return (
+    <div className="flex flex-wrap gap-1">
+      {options.map((o) => (
+        <span
+          key={o.value_id}
+          className="inline-flex items-center gap-1 rounded-md bg-ink/5 px-1.5 py-0.5 text-[11px]"
+        >
+          <span className="text-ink/40">{o.type}:</span>
+          <span className="font-medium text-ink">{o.value}</span>
+        </span>
+      ))}
+    </div>
+  );
+}
 
 const selectCls =
   "h-9 w-full border border-ink/15 bg-white px-2 text-sm text-ink focus:border-primary focus:outline-none";
@@ -198,6 +221,8 @@ export function VariantManager({
   const canAdd = hasOptions || variants.length === 0;
   const [editId, setEditId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
+  // The variant's option-value selection while editing (optionTypeId -> valueId).
+  const [editOptions, setEditOptions] = useState<Record<number, number>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -217,6 +242,9 @@ export function VariantManager({
       moq: String(v.moq ?? 1),
       tiers: rowsFromTiers(v.price_tiers),
     });
+    setEditOptions(
+      Object.fromEntries((v.options ?? []).map((o) => [o.type_id, o.value_id])),
+    );
   }
 
   async function setStock(variantId: string, qty: number) {
@@ -230,6 +258,7 @@ export function VariantManager({
     setBusy(true);
     setError(null);
     try {
+      const optionIds = Object.values(editOptions).filter(Boolean);
       await adminCall(`/catalog/variants/${v.id}/`, {
         method: "PATCH",
         body: JSON.stringify({
@@ -238,6 +267,10 @@ export function VariantManager({
           is_active: draft.is_active,
           moq: Number(draft.moq) || 1,
           price_tiers: tiersPayload(draft.tiers),
+          // Only send the option combination for variable products.
+          ...(hasOptions && optionIds.length
+            ? { option_value_ids: optionIds }
+            : {}),
         }),
       });
       if (Number(draft.stock) !== (stock[v.id] ?? 0)) {
@@ -471,6 +504,7 @@ export function VariantManager({
               <tr>
                 <th className="py-2 pr-4 font-medium">Image</th>
                 <th className="py-2 pr-4 font-medium">SKU</th>
+                <th className="py-2 pr-4 font-medium">Options</th>
                 <th className="py-2 pr-4 font-medium">Price</th>
                 <th className="py-2 pr-4 font-medium">Stock</th>
                 <th className="py-2 pr-4 font-medium">Status</th>
@@ -499,6 +533,9 @@ export function VariantManager({
                         }
                         className="h-9 w-32"
                       />
+                    </td>
+                    <td className="py-2 pr-4">
+                      <OptionBadges options={v.options} />
                     </td>
                     <td className="py-2 pr-4">
                       <Input
@@ -553,8 +590,33 @@ export function VariantManager({
                     </td>
                   </tr>
                   <tr className="bg-surface">
-                    <td colSpan={6} className="px-1 pb-3">
+                    <td colSpan={7} className="px-1 pb-3">
                       <div className="flex flex-wrap items-start gap-6 border-t border-ink/10 pt-3">
+                        {hasOptions &&
+                          optionTypes.map((ot) => (
+                            <div key={ot.id}>
+                              <label className="mb-1 block text-xs font-medium text-ink/60">
+                                {ot.name}
+                              </label>
+                              <select
+                                value={editOptions[ot.id] ?? ""}
+                                onChange={(e) =>
+                                  setEditOptions((o) => ({
+                                    ...o,
+                                    [ot.id]: Number(e.target.value),
+                                  }))
+                                }
+                                className={selectCls}
+                              >
+                                <option value="">—</option>
+                                {ot.values.map((val) => (
+                                  <option key={val.id} value={val.id}>
+                                    {val.value}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          ))}
                         <div>
                           <label className="mb-1 block text-xs font-medium text-ink/60">
                             MOQ (min order qty)
@@ -594,6 +656,9 @@ export function VariantManager({
                       />
                     </td>
                     <td className="py-2 pr-4 font-medium text-ink">{v.sku}</td>
+                    <td className="py-2 pr-4">
+                      <OptionBadges options={v.options} />
+                    </td>
                     <td className="py-2 pr-4 text-ink/70">
                       {v.price}
                       {Number(v.cost_price) > 0 && (
