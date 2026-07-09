@@ -1,8 +1,16 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 
-/** Minimal accessible modal: backdrop + panel, closes on Esc / backdrop click. */
+/**
+ * Minimal accessible modal: backdrop + panel, closes on Esc / backdrop click.
+ *
+ * Rendered through a portal to `document.body` so `position: fixed` is relative
+ * to the viewport — otherwise a transformed ancestor (e.g. the admin `<main>`
+ * fade-in animation) becomes the containing block and the modal drifts off to
+ * the top of the page instead of centering.
+ */
 export function Dialog({
   open,
   onClose,
@@ -16,6 +24,9 @@ export function Dialog({
   description?: string;
   children: React.ReactNode;
 }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {
@@ -30,9 +41,9 @@ export function Dialog({
     };
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
       <button
         type="button"
@@ -54,6 +65,7 @@ export function Dialog({
         )}
         <div className="mt-5">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
