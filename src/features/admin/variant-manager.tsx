@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Banner } from "@/components/ui/banner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/toast";
 import { adminCall } from "@/lib/admin-client";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import type { AdminOptionType, AdminVariant } from "@/types/catalog";
@@ -190,6 +191,7 @@ export function VariantManager({
   variantImages: Record<string, VariantImage>;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const hasOptions = optionTypes.length > 0;
   // A product without options can only hold one variant (unique empty options
   // key), so only offer "add" for variable products or an empty product.
@@ -242,9 +244,12 @@ export function VariantManager({
         await setStock(v.id, Number(draft.stock));
       }
       setEditId(null);
+      toast.success(`Variant ${draft.sku.trim()} saved`);
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Save failed.");
+      const msg = e instanceof Error ? e.message : "Save failed.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setBusy(false);
     }
@@ -256,9 +261,12 @@ export function VariantManager({
     setError(null);
     try {
       await adminCall(`/catalog/variants/${v.id}/`, { method: "DELETE" });
+      toast.success(`Variant ${v.sku} deleted`);
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Delete failed.");
+      const msg = e instanceof Error ? e.message : "Delete failed.";
+      setError(msg);
+      toast.error(msg);
     }
   }
 
@@ -293,6 +301,7 @@ export function VariantManager({
         await setStock(variant.id, Number(newDraft.stock));
       }
       setAdding(false);
+      toast.success("Variant added");
       setNewDraft(EMPTY_DRAFT);
       setNewOptions({});
       router.refresh();

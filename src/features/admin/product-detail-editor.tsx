@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Banner } from "@/components/ui/banner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/toast";
 import { adminCall } from "@/lib/admin-client";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import type {
@@ -45,6 +46,7 @@ export function ProductDetailEditor({
   stock: Record<string, number>;
 }) {
   const router = useRouter();
+  const toast = useToast();
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -133,10 +135,10 @@ export function ProductDetailEditor({
         }),
       });
       setEditing(false);
-      setStatus("Product updated.");
+      toast.success("Product updated");
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Save failed.");
+      toast.error(e instanceof Error ? e.message : "Couldn’t save the product.");
     } finally {
       setBusy(false);
     }

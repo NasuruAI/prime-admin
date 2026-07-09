@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { AdminShell } from "@/components/admin-shell";
+import { ToastProvider } from "@/components/ui/toast";
 import { getStoreLogoUrl, getStoreName } from "@/lib/config";
 import { getSession } from "@/lib/session";
 
@@ -20,8 +21,10 @@ export default async function DashboardLayout({
   ]);
 
   return (
-    <AdminShell email={user.email} storeName={storeName} logoUrl={logoUrl}>
-      {children}
-    </AdminShell>
+    <ToastProvider>
+      <AdminShell email={user.email} storeName={storeName} logoUrl={logoUrl}>
+        {children}
+      </AdminShell>
+    </ToastProvider>
   );
 }

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/components/ui/toast";
 import { adminCall } from "@/lib/admin-client";
 import type { AdminProduct } from "@/types/catalog";
 
@@ -14,9 +15,9 @@ const STORAGE_KEY = "admin_catalog_view";
 
 export function CatalogBrowser({ products }: { products: AdminProduct[] }) {
   const router = useRouter();
+  const toast = useToast();
   const [view, setView] = useState<View>("grid");
   const [deleting, setDeleting] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const saved = window.localStorage.getItem(STORAGE_KEY) as View | null;
@@ -36,12 +37,12 @@ export function CatalogBrowser({ products }: { products: AdminProduct[] }) {
     )
       return;
     setDeleting(id);
-    setError(null);
     try {
       await adminCall(`/catalog/products/${id}/`, { method: "DELETE" });
+      toast.success(`“${title}” deleted`);
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Delete failed.");
+      toast.error(e instanceof Error ? e.message : "Couldn’t delete the product.");
     } finally {
       setDeleting(null);
     }
@@ -69,12 +70,6 @@ export function CatalogBrowser({ products }: { products: AdminProduct[] }) {
           ))}
         </div>
       </div>
-
-      {error && (
-        <p className="rounded-md bg-accent/10 px-3 py-2 text-sm text-accent">
-          {error}
-        </p>
-      )}
 
       {products.length === 0 ? (
         <div className="admin-card p-10 text-center text-sm text-ink/55">

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Banner } from "@/components/ui/banner";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 import { adminCall, adminList } from "@/lib/admin-client";
 
 type AdminReview = {
@@ -28,6 +29,7 @@ export function ReviewsAdmin() {
   const [status, setStatus] = useState<"" | "published" | "hidden">("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const toast = useToast();
 
   async function load() {
     const qs = status ? `?status=${status}` : "";
@@ -42,15 +44,15 @@ export function ReviewsAdmin() {
 
   async function setReviewStatus(r: AdminReview, next: AdminReview["status"]) {
     setBusy(r.id);
-    setError(null);
     try {
       await adminCall(`/catalog/reviews/${r.id}/`, {
         method: "PATCH",
         body: JSON.stringify({ status: next }),
       });
+      toast.success(next === "published" ? "Review published" : "Review hidden");
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Update failed.");
+      toast.error(e instanceof Error ? e.message : "Update failed.");
     } finally {
       setBusy(null);
     }
@@ -59,12 +61,12 @@ export function ReviewsAdmin() {
   async function remove(r: AdminReview) {
     if (!window.confirm(`Delete this review by ${r.author_name}?`)) return;
     setBusy(r.id);
-    setError(null);
     try {
       await adminCall(`/catalog/reviews/${r.id}/`, { method: "DELETE" });
+      toast.success("Review deleted");
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Delete failed.");
+      toast.error(e instanceof Error ? e.message : "Delete failed.");
     } finally {
       setBusy(null);
     }

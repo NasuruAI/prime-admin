@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Badge, statusTone } from "@/components/ui/badge";
 import { Banner } from "@/components/ui/banner";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 import { adminCall, adminList } from "@/lib/admin-client";
 
 type AdminOrder = {
@@ -33,36 +34,38 @@ const selectCls =
 export function OrdersAdmin() {
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
 
   async function load() {
     setOrders(await adminList<AdminOrder>("/orders/"));
   }
   useEffect(() => {
     load().catch((e) =>
-      setError(e instanceof Error ? e.message : "Failed to load"),
+      setError(e instanceof Error ? e.message : "Failed to load orders."),
     );
   }, []);
 
   async function transition(number: string, status: string) {
-    setError(null);
     try {
       await adminCall(`/orders/${number}/transition/`, {
         method: "POST",
         body: JSON.stringify({ status }),
       });
+      toast.success(`Order ${number} → ${status.replace(/_/g, " ")}`);
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Transition failed.");
+      toast.error(e instanceof Error ? e.message : "Couldn’t update the order.");
     }
   }
 
   async function refund(number: string) {
-    setError(null);
+    if (!window.confirm(`Refund order ${number}?`)) return;
     try {
       await adminCall(`/orders/${number}/refund/`, { method: "POST" });
+      toast.success(`Order ${number} refunded`);
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Refund failed.");
+      toast.error(e instanceof Error ? e.message : "Refund failed.");
     }
   }
 
@@ -73,15 +76,15 @@ export function OrdersAdmin() {
       "",
     );
     if (tracking === null) return;
-    setError(null);
     try {
       await adminCall(`/orders/${number}/mark-shipped/`, {
         method: "POST",
         body: JSON.stringify({ tracking_number: tracking.trim() }),
       });
+      toast.success(`Order ${number} marked shipped — customer notified`);
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not mark shipped.");
+      toast.error(e instanceof Error ? e.message : "Couldn’t mark shipped.");
     }
   }
 

@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { Banner } from "@/components/ui/banner";
 import { Button } from "@/components/ui/button";
+import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/toast";
 import { adminCall, adminList } from "@/lib/admin-client";
 
 import { CloudinaryUpload } from "./cloudinary-upload";
@@ -59,8 +61,14 @@ export function ProductCreator() {
   const [stockPerVariant, setStockPerVariant] = useState("0");
 
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState<{ id: string; count: number } | null>(null);
+  // Set when a product has just been created — drives the "what next?" dialog.
+  const [saved, setSaved] = useState<{
+    id: string;
+    count: number;
+    title: string;
+  } | null>(null);
+  const router = useRouter();
+  const toast = useToast();
 
   useEffect(() => {
     adminList<Ref>("/catalog/categories/").then(setCategories).catch(() => {});
@@ -72,14 +80,35 @@ export function ProductCreator() {
     setOptions((cur) => cur.map((o, idx) => (idx === i ? { ...o, ...patch } : o)));
   }
 
+  function resetForm() {
+    setTitle("");
+    setDescription("");
+    setSku("");
+    setPrice("");
+    setStock("0");
+    setDefaultPrice("");
+    setSkuPrefix("");
+    setNewCategory("");
+    setNewCategoryImageUrl("");
+    setNewCategoryImage("");
+    setFeaturedUrl("");
+    setFeaturedPublicId("");
+    setFlashOn(false);
+    if (typeof window !== "undefined")
+      window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   async function create() {
     if (busy) return; // guard against double-submit
-    setError(null);
-    setDone(null);
 
-    if (!title.trim()) return setError("Title is required.");
-    if (kind === "simple" && (!sku.trim() || !price.trim()))
-      return setError("SKU and price are required for a simple product.");
+    if (!title.trim()) {
+      toast.error("Add a product title to continue.");
+      return;
+    }
+    if (kind === "simple" && (!sku.trim() || !price.trim())) {
+      toast.error("A simple product needs a SKU and a price.");
+      return;
+    }
     const cleanOptions = options
       .map((o) => ({
         name: o.name.trim(),
@@ -90,10 +119,14 @@ export function ProductCreator() {
       }))
       .filter((o) => o.name && o.values.length > 0);
     if (kind === "variable") {
-      if (cleanOptions.length === 0)
-        return setError("Add at least one option with values.");
-      if (!defaultPrice.trim())
-        return setError("A default price is required to generate variants.");
+      if (cleanOptions.length === 0) {
+        toast.error("Add at least one option (e.g. Size) with values.");
+        return;
+      }
+      if (!defaultPrice.trim()) {
+        toast.error("A default price is required to generate variants.");
+        return;
+      }
     }
 
     setBusy(true);
@@ -132,44 +165,61 @@ export function ProductCreator() {
         { method: "POST", body: JSON.stringify(payload) },
       );
 
-      setDone({ id: product.id, count: product.variant_count });
-      // Reset for a quick "add another".
-      setTitle("");
-      setDescription("");
-      setSku("");
-      setPrice("");
-      setStock("0");
-      setDefaultPrice("");
-      setSkuPrefix("");
-      setNewCategory("");
-      setNewCategoryImageUrl("");
-      setNewCategoryImage("");
-      setFeaturedUrl("");
-      setFeaturedPublicId("");
-      setFlashOn(false);
+      toast.success(`“${title.trim()}” created`);
+      // Open the "what next?" dialog; the form is only reset if they choose
+      // "add another" (so navigating away keeps their context intact).
+      setSaved({
+        id: product.id,
+        count: product.variant_count,
+        title: title.trim(),
+      });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not create product.");
+      toast.error(
+        e instanceof Error ? e.message : "Could not create the product.",
+      );
     } finally {
       setBusy(false);
     }
   }
 
+  // Dialog choices.
+  function addAnother() {
+    setSaved(null);
+    resetForm();
+  }
+  function addVariations() {
+    if (saved) router.push(`/catalog/${saved.id}`);
+  }
+  function goToCatalog() {
+    router.push("/catalog");
+  }
+
   return (
     <div className="flex max-w-3xl flex-col gap-5">
-      {done && (
-        <Banner tone="success">
-          Product created with {done.count} variant
-          {done.count === 1 ? "" : "s"}.{" "}
-          <Link href={`/catalog/${done.id}`} className="underline">
-            View product
-          </Link>{" "}
-          ·{" "}
-          <Link href="/catalog" className="underline">
-            Back to catalog
-          </Link>
-        </Banner>
-      )}
-      {error && <Banner tone="error">{error}</Banner>}
+      <Dialog
+        open={saved !== null}
+        onClose={() => setSaved(null)}
+        title="Product created 🎉"
+        description={
+          saved
+            ? `“${saved.title}” was created with ${saved.count} variant${
+                saved.count === 1 ? "" : "s"
+              }. What would you like to do next?`
+            : ""
+        }
+      >
+        <div className="flex flex-col gap-2">
+          <Button type="button" onClick={addAnother}>
+            Save &amp; add another
+          </Button>
+          <Button type="button" variant="ghost" onClick={addVariations}>
+            Add variations
+          </Button>
+          <Button type="button" variant="ghost" onClick={goToCatalog}>
+            Save &amp; close
+          </Button>
+        </div>
+      </Dialog>
 
       {/* Details */}
       <section className="admin-card p-6">

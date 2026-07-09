@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Banner } from "@/components/ui/banner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/toast";
 import { adminCall, adminList } from "@/lib/admin-client";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { cloudinaryUrl } from "@/lib/env";
@@ -78,6 +79,7 @@ export function CategoriesAdmin() {
   const [image, setImage] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
 
   async function load() {
     setCategories(await adminList<AdminCategory>("/catalog/categories/"));
@@ -89,27 +91,27 @@ export function CategoriesAdmin() {
   }, []);
 
   async function create() {
-    if (!name.trim()) return setError("Give the category a name.");
-    if (!image) return setError("Add an image that represents the category.");
+    if (!name.trim()) return toast.error("Give the category a name.");
+    if (!image)
+      return toast.error("Add an image that represents the category.");
     setBusy(true);
-    setError(null);
     try {
       await adminCall("/catalog/categories/", {
         method: "POST",
         body: JSON.stringify({ name: name.trim(), image_public_id: image }),
       });
+      toast.success(`“${name.trim()}” category created`);
       setName("");
       setImage("");
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not create category.");
+      toast.error(e instanceof Error ? e.message : "Couldn’t create the category.");
     } finally {
       setBusy(false);
     }
   }
 
   async function patch(id: number, body: Record<string, unknown>) {
-    setError(null);
     try {
       await adminCall(`/catalog/categories/${id}/`, {
         method: "PATCH",
@@ -117,18 +119,18 @@ export function CategoriesAdmin() {
       });
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Update failed.");
+      toast.error(e instanceof Error ? e.message : "Update failed.");
     }
   }
 
   async function remove(c: AdminCategory) {
     if (!window.confirm(`Delete the "${c.name}" category?`)) return;
-    setError(null);
     try {
       await adminCall(`/catalog/categories/${c.id}/`, { method: "DELETE" });
+      toast.success(`“${c.name}” deleted`);
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Delete failed.");
+      toast.error(e instanceof Error ? e.message : "Delete failed.");
     }
   }
 
